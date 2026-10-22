@@ -23,7 +23,7 @@ nav a{color:#111;text-decoration:none;font-weight:bold;font-size:13px}
 .hero p{line-height:1.6;color:#444}
 button,.btn{border:0;display:inline-block;background:#111;color:white;padding:13px 18px;border-radius:3px;text-decoration:none;font-weight:bold;cursor:pointer}
 button:hover,.btn:hover{background:#333}
-button.gold{background:var(--gold);color:#111}
+button.gold,.btn.gold{background:var(--gold);color:#111}
 button.danger{background:#a52820}
 button.secondary{background:#eee;color:#111}
 button:disabled{opacity:.5;cursor:wait}
@@ -60,6 +60,9 @@ input,select,textarea{width:100%;padding:12px;border:1px solid #d7d2c8;border-ra
 .admin-item .info{flex:1;min-width:0}
 .admin-item strong{display:block;overflow-wrap:anywhere;font-size:14px}
 .admin-item button{padding:9px;font-size:12px}
+.contact-buttons{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+.whatsapp{background:#167b43;color:white}
+.whatsapp:hover{background:#105f33}
 footer{background:#111;color:white;text-align:center;padding:28px 15px;margin-top:20px}
 footer a{color:var(--gold)}
 .small{font-size:12px;color:#999}
@@ -123,9 +126,12 @@ footer a{color:var(--gold)}
 
 <section id="contact">
 <div class="notice" style="text-align:center">
-<h2>Find Your Next Look</h2>
-<p>Join our WhatsApp community for new arrivals and updates.</p>
+<h2>Need Help or Want to Order?</h2>
+<p>Message Jimmy directly on WhatsApp for orders, sizes, prices, and enquiries.</p>
+<div class="contact-buttons">
+<a class="btn whatsapp" href="https://wa.me/2348121750582?text=Hello%20Jimmy%2C%20I%20am%20contacting%20you%20from%20the%20K-COLLECTIONS%20website." target="_blank" rel="noopener">CHAT WITH JIMMY</a>
 <a class="btn" href="https://chat.whatsapp.com/B8dwXoD6OV02GTpRviBzUy?mode=gi_t" target="_blank" rel="noopener">JOIN OUR WHATSAPP GROUP</a>
+</div>
 </div>
 </section>
 
@@ -218,6 +224,7 @@ footer a{color:var(--gold)}
 <footer>
 <h3>K-COLLECTIONS</h3>
 <p>Classy. Trendy. Affordable.</p>
+<p><a href="https://wa.me/2348121750582?text=Hello%20Jimmy%2C%20I%20am%20contacting%20you%20from%20the%20K-COLLECTIONS%20website." target="_blank" rel="noopener">Message Jimmy directly on WhatsApp</a></p>
 <p><a href="https://chat.whatsapp.com/B8dwXoD6OV02GTpRviBzUy?mode=gi_t" target="_blank" rel="noopener">Join our WhatsApp community</a></p>
 <p class="small">© 2026 K-COLLECTIONS</p>
 </footer>
@@ -226,11 +233,10 @@ footer a{color:var(--gold)}
 (function(){
 "use strict";
 
-/* Public project settings. Never put a Supabase secret key here. */
 const SUPABASE_URL = "https://bwkonxdhmhvxlroqtitj.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ApjCd9smYdAqldg3GQ4f5g_HDJ9Pn1q";
 const OWNER_ID = "944ec5c5-cceb-4ef3-9b13-ccfd0bc688e4";
-const WHATSAPP_GROUP = "https://chat.whatsapp.com/B8dwXoD6OV02GTpRviBzUy?mode=gi_t";
+const WHATSAPP_NUMBER = "2348121750582";
 const BUCKET = "product-images";
 
 const $ = id => document.getElementById(id);
@@ -269,17 +275,19 @@ function init(){
   }
   db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   loadProducts();
+
   db.auth.getSession().then(function(result){
     if(result.error) return;
     const user = result.data.session && result.data.session.user;
     if(user && user.id === OWNER_ID) showDashboard(user);
     else if(user) awaitSignOut();
   });
+
   db.auth.onAuthStateChange(function(event, session){
     const user = session && session.user;
     if(user && user.id === OWNER_ID){
       showDashboard(user);
-    } else {
+    }else{
       currentUser = null;
       $("loginPanel").classList.remove("hidden");
       $("dashboard").classList.add("hidden");
@@ -306,18 +314,20 @@ function renderProducts(){
   const list = filteredProducts();
   const root = $("products");
   root.innerHTML = "";
+
   if(!list.length){
     root.innerHTML = '<div class="empty">No products found yet. Please check back soon.</div>';
     return;
   }
+
   list.forEach(function(p){
     const card = document.createElement("article");
     card.className = "product";
-    const img = p.image_url || "";
     const sizes = Array.isArray(p.sizes) ? p.sizes.join(", ") : "";
     const stock = Number(p.stock) > 0 ? "In stock: " + Number(p.stock) : "Currently sold out";
+
     card.innerHTML =
-      '<img loading="lazy" src="' + escapeHTML(img) + '" alt="' + escapeHTML(p.name) + '">' +
+      '<img loading="lazy" src="' + escapeHTML(p.image_url || "") + '" alt="' + escapeHTML(p.name) + '">' +
       '<div class="product-info">' +
       '<div class="muted">' + escapeHTML(p.category) + '</div>' +
       '<h3>' + escapeHTML(p.name) + '</h3>' +
@@ -325,19 +335,24 @@ function renderProducts(){
       '<div class="muted">' + escapeHTML(p.description || "") + '</div>' +
       '<div class="muted">Sizes: ' + escapeHTML(sizes || "Ask us") + '</div>' +
       '<div class="muted">' + escapeHTML(stock) + '</div>' +
-      '<button type="button" ' + (Number(p.stock) <= 0 ? "disabled" : "") + '>ORDER ON WHATSAPP</button>' +
+      '<button type="button" class="whatsapp-order" ' + (Number(p.stock) <= 0 ? "disabled" : "") + '>ORDER ON WHATSAPP</button>' +
       '</div>';
+
     const imgElement = card.querySelector("img");
     imgElement.addEventListener("error", function(){
       imgElement.style.display = "none";
     }, {once:true});
-    card.querySelector("button").addEventListener("click", function(){
-      const message = "Hello K-COLLECTIONS! I want to order:\n" +
-        p.name + "\nPrice: " + naira(p.price) + "\nSizes: " + (sizes || "Please advise") +
-        "\nPlease confirm availability.";
-      const url = "https://wa.me/?text=" + encodeURIComponent(message);
-      window.open(url, "_blank", "noopener");
+
+    card.querySelector(".whatsapp-order").addEventListener("click", function(){
+      const message = "Hello Jimmy! I found this item on the K-COLLECTIONS website and would like to order:\n\n" +
+        "Product: " + p.name +
+        "\nPrice: " + naira(p.price) +
+        "\nAvailable sizes: " + (sizes || "Please advise") +
+        "\nPlease confirm availability. Thank you.";
+      const url = "https://wa.me/" + WHATSAPP_NUMBER + "?text=" + encodeURIComponent(message);
+      window.open(url, "_blank");
     });
+
     root.appendChild(card);
   });
 }
@@ -345,15 +360,18 @@ function renderProducts(){
 async function loadProducts(){
   if(!db) return;
   setStatus("Loading the latest collection...");
+
   const result = await db.from("products")
     .select("id,name,description,category,price,sizes,image_url,stock,is_active,created_at")
     .eq("is_active", true)
     .order("created_at", {ascending:false});
+
   if(result.error){
-    setStatus("Could not load products. Database access may need to be enabled in Supabase. " + result.error.message, "error");
+    setStatus("Could not load products. Check Supabase access. " + result.error.message, "error");
     $("products").innerHTML = "";
     return;
   }
+
   productsCache = result.data || [];
   setStatus(productsCache.length ? productsCache.length + " product(s) available." : "Our collection is being prepared. Check back soon.");
   renderProducts();
@@ -376,17 +394,20 @@ async function signIn(event){
   const button = $("loginForm").querySelector("button");
   button.disabled = true;
   setMessage("loginMessage", "Signing in...");
+
   try{
     const result = await db.auth.signInWithPassword({
       email: $("email").value.trim(),
       password: $("password").value
     });
     if(result.error) throw result.error;
+
     const user = result.data.user;
     if(!user || user.id !== OWNER_ID){
       await db.auth.signOut();
       throw new Error("This account is not authorised as the shop owner.");
     }
+
     $("password").value = "";
     showDashboard(user);
     await loadProducts();
@@ -426,10 +447,12 @@ function editProduct(p){
 function renderAdminProducts(){
   const root = $("adminProducts");
   root.innerHTML = "";
+
   if(!productsCache.length){
     root.innerHTML = '<p class="muted">No products yet. Add your first product above.</p>';
     return;
   }
+
   productsCache.forEach(function(p){
     const item = document.createElement("div");
     item.className = "admin-item";
@@ -439,6 +462,7 @@ function renderAdminProducts(){
       '<span class="muted">' + naira(p.price) + ' · Stock: ' + Number(p.stock) + '</span></div>' +
       '<button type="button" class="secondary edit">EDIT</button>' +
       '<button type="button" class="danger remove">DELETE</button>';
+
     item.querySelector(".edit").addEventListener("click", function(){editProduct(p);});
     item.querySelector(".remove").addEventListener("click", function(){deleteProduct(p);});
     root.appendChild(item);
@@ -448,40 +472,52 @@ function renderAdminProducts(){
 async function uploadImage(file){
   if(!file) return "";
   if(file.size > 5 * 1024 * 1024) throw new Error("Choose an image smaller than 5 MB.");
+
   const allowed = ["image/jpeg","image/png","image/webp"];
   if(!allowed.includes(file.type)) throw new Error("Use a JPG, PNG, or WebP image.");
+
   const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
   const path = currentUser.id + "/" + Date.now() + "-" + Math.random().toString(36).slice(2) + "." + ext;
+
   const result = await db.storage.from(BUCKET).upload(path, file, {
     contentType:file.type,
     cacheControl:"3600",
     upsert:false
   });
+
   if(result.error) throw result.error;
   return db.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
 }
 
 async function saveProduct(event){
   event.preventDefault();
-  if(!currentUser || currentUser.id !== OWNER_ID) {
+
+  if(!currentUser || currentUser.id !== OWNER_ID){
     setMessage("formMessage", "Please sign in as the authorised owner.");
     return;
   }
   if(busy) return;
+
   busy = true;
   const button = $("saveProduct");
   button.disabled = true;
   setMessage("formMessage", "Saving product...");
+
   try{
     const id = $("productId").value;
     const file = $("productImage").files[0];
     let imageUrl = "";
+
     if(file) imageUrl = await uploadImage(file);
     else if(id){
       const existing = productsCache.find(function(p){return String(p.id) === String(id);});
       imageUrl = existing ? existing.image_url || "" : "";
     }
-    const sizes = $("productSizes").value.split(",").map(function(s){return s.trim();}).filter(Boolean);
+
+    const sizes = $("productSizes").value.split(",").map(function(s){
+      return s.trim();
+    }).filter(Boolean);
+
     const data = {
       name:$("productName").value.trim(),
       price:Number($("productPrice").value),
@@ -493,17 +529,21 @@ async function saveProduct(event){
       is_active:true,
       updated_at:new Date().toISOString()
     };
+
     if(!data.name) throw new Error("Enter a product name.");
     if(!Number.isFinite(data.price) || data.price < 0) throw new Error("Enter a valid price.");
     if(!Number.isInteger(data.stock) || data.stock < 0) throw new Error("Enter a valid stock quantity.");
     if(!id && !imageUrl) throw new Error("Please upload a product photo.");
+
     let result;
     if(id){
       result = await db.from("products").update(data).eq("id", Number(id)).select().single();
     }else{
       result = await db.from("products").insert(data).select().single();
     }
+
     if(result.error) throw result.error;
+
     resetForm();
     setMessage("formMessage", "Product saved successfully.");
     await loadProducts();
@@ -518,6 +558,7 @@ async function saveProduct(event){
 async function deleteProduct(p){
   if(!currentUser || currentUser.id !== OWNER_ID) return;
   if(!confirm("Delete " + p.name + "? This removes it from the catalogue.")) return;
+
   const result = await db.from("products").delete().eq("id", p.id);
   if(result.error){
     alert("Could not delete product: " + result.error.message);
@@ -539,10 +580,12 @@ $("loginForm").addEventListener("submit", signIn);
 $("productForm").addEventListener("submit", saveProduct);
 $("search").addEventListener("input", renderProducts);
 $("categoryFilter").addEventListener("change", renderProducts);
+
 $("newProduct").addEventListener("click", function(){
   resetForm();
   $("productFormPanel").scrollIntoView({behavior:"smooth"});
 });
+
 $("cancelEdit").addEventListener("click", resetForm);
 $("refreshProducts").addEventListener("click", loadProducts);
 $("logout").addEventListener("click", logout);
