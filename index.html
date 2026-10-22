@@ -3,91 +3,552 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#111111">
-<meta name="description" content="Discover stylish men's fashion at K-COLLECTIONS. Classy. Trendy. Affordable.">
+<meta name="description" content="Shop stylish men's fashion at K-COLLECTIONS. Classy. Trendy. Affordable.">
 <title>K-COLLECTIONS | Men's Fashion</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
+:root{--black:#111;--gold:#c6a66b;--cream:#f7f5f0;--white:#fff;--muted:#777;--red:#b42318}
 *{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:#faf9f6;color:#171717}
-header{background:#111;color:white;padding:20px;text-align:center}
-header h1{margin:0;font-size:25px;letter-spacing:2px}
-header p{margin:8px 0 0;color:#d7bd83}
-nav{display:flex;justify-content:center;gap:20px;padding:14px;background:#fff;flex-wrap:wrap}
-nav a{color:#171717;text-decoration:none;font-weight:bold;font-size:14px}
-.hero{padding:55px 22px;text-align:center;background:#eae4d9}
-.hero h2{font-size:36px;margin:0 0 12px}
+body{margin:0;font-family:Arial,sans-serif;background:var(--cream);color:var(--black)}
+header{background:var(--black);color:white;text-align:center;padding:22px 12px}
+header h1{margin:0;letter-spacing:3px;font-size:26px}
+header p{margin:9px 0 0;color:var(--gold);letter-spacing:2px;font-size:12px}
+nav{display:flex;justify-content:center;gap:20px;flex-wrap:wrap;padding:15px;background:white;position:sticky;top:0;z-index:5;box-shadow:0 2px 8px #0000000b}
+nav a{color:#111;text-decoration:none;font-weight:bold;font-size:13px}
+.hero{background:#e9e1d3;text-align:center;padding:55px 18px}
+.hero .eyebrow{letter-spacing:3px;font-size:12px}
+.hero h2{font-size:clamp(34px,7vw,58px);margin:12px 0}
 .hero p{line-height:1.6;color:#444}
-.btn{display:inline-block;background:#111;color:white;padding:14px 22px;text-decoration:none;border-radius:4px;margin-top:12px;font-weight:bold}
-section{padding:28px 16px;max-width:1050px;margin:auto}
-h2.section-title{text-align:center;margin:10px 0 25px}
-.categories{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-.category{background:#eee8de;padding:22px 10px;text-align:center;font-weight:bold;border-radius:5px}
-.notice{background:white;border:1px solid #e3e0da;padding:22px;text-align:center;border-radius:8px;line-height:1.7}
-footer{background:#111;color:white;text-align:center;padding:26px 15px;margin-top:20px}
-footer a{color:#e6cc91}
-.small{font-size:13px;color:#777}
+button,.btn{border:0;display:inline-block;background:#111;color:white;padding:13px 18px;border-radius:3px;text-decoration:none;font-weight:bold;cursor:pointer}
+button:hover,.btn:hover{background:#333}
+button.gold{background:var(--gold);color:#111}
+button.danger{background:#a52820}
+button.secondary{background:#eee;color:#111}
+button:disabled{opacity:.5;cursor:wait}
+section{max-width:1150px;margin:auto;padding:32px 16px}
+.section-title{text-align:center;margin:5px 0 25px}
+.categories{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.category{padding:20px 8px;text-align:center;background:#eae4da;font-weight:bold;border-radius:4px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+input,select,textarea{width:100%;padding:12px;border:1px solid #d7d2c8;border-radius:4px;font:inherit;background:white}
+.toolbar input{flex:2;min-width:150px}
+.toolbar select{flex:1;min-width:130px}
+.products{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.product{background:white;border:1px solid #eee;border-radius:5px;overflow:hidden;display:flex;flex-direction:column}
+.product img{width:100%;aspect-ratio:4/5;object-fit:cover;background:#eee}
+.product-info{padding:12px;display:flex;flex-direction:column;gap:8px;flex:1}
+.product h3{margin:0;font-size:15px;overflow-wrap:anywhere}
+.price{font-size:18px;font-weight:bold}
+.muted{font-size:12px;color:var(--muted);line-height:1.5}
+.product button{width:100%;font-size:12px;padding:11px 7px}
+.notice,.panel{background:white;border:1px solid #e5e0d7;border-radius:6px;padding:18px;margin:12px 0}
+.panel h3{margin-top:0}
+.hidden{display:none!important}
+#admin{background:#eee9e0;border-top:3px solid var(--gold)}
+.form-grid{display:grid;grid-template-columns:1fr;gap:12px}
+.field label{display:block;font-size:13px;font-weight:bold;margin-bottom:6px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.actions button{flex:1}
+#status{padding:10px 14px;font-size:13px;line-height:1.5}
+#status.error{background:#fff0ee;color:var(--red)}
+#status.success{background:#eaf7ed;color:#176b2c}
+.empty{text-align:center;padding:35px 12px;color:#666;background:white;border-radius:5px;grid-column:1/-1}
+.admin-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #eee}
+.admin-item img{width:58px;height:65px;object-fit:cover;background:#eee}
+.admin-item .info{flex:1;min-width:0}
+.admin-item strong{display:block;overflow-wrap:anywhere;font-size:14px}
+.admin-item button{padding:9px;font-size:12px}
+footer{background:#111;color:white;text-align:center;padding:28px 15px;margin-top:20px}
+footer a{color:var(--gold)}
+.small{font-size:12px;color:#999}
 @media(min-width:650px){
 .hero{padding:85px 20px}
-.hero h2{font-size:52px}
 .categories{grid-template-columns:repeat(4,1fr)}
+.products{grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.form-grid{grid-template-columns:1fr 1fr}
+.product-info{padding:16px}
 }
+@media(min-width:950px){.products{grid-template-columns:repeat(4,minmax(0,1fr))}}
 </style>
 </head>
 <body>
+
 <header>
 <h1>K-COLLECTIONS</h1>
 <p>CLASSY. TRENDY. AFFORDABLE.</p>
 </header>
 
 <nav>
-<a href="#home">Home</a>
-<a href="#shop">Shop</a>
-<a href="#categories">Categories</a>
-<a href="#contact">Contact</a>
+<a href="#home">HOME</a>
+<a href="#shop">SHOP</a>
+<a href="#categories">CATEGORIES</a>
+<a href="#contact">CONTACT</a>
 </nav>
 
 <div class="hero" id="home">
-<p>THE MEN'S FASHION DESTINATION</p>
+<p class="eyebrow">THE MEN'S FASHION DESTINATION</p>
 <h2>Upgrade Your Style.</h2>
-<p>Discover your next favourite look with K-COLLECTIONS.</p>
+<p>Discover your next favourite look.</p>
 <a class="btn" href="#shop">EXPLORE THE STORE</a>
 </div>
 
 <section id="categories">
 <h2 class="section-title">SHOP BY CATEGORY</h2>
 <div class="categories">
-<div class="category">T-Shirts & Polos</div>
-<div class="category">Jeans & Trousers</div>
-<div class="category">Shirts & Shorts</div>
-<div class="category">Jackets & Hoodies</div>
+<div class="category">T-Shirts &amp; Polos</div>
+<div class="category">Jeans &amp; Trousers</div>
+<div class="category">Shirts &amp; Shorts</div>
+<div class="category">Jackets &amp; Hoodies</div>
 </div>
 </section>
 
 <section id="shop">
 <h2 class="section-title">OUR COLLECTION</h2>
-<div class="notice">
-<h3>New Arrivals Coming Soon</h3>
-<p>We're preparing our online collection.</p>
-<p>Visit our WhatsApp group for available clothes and new arrivals.</p>
-<a class="btn" href="https://chat.whatsapp.com/B8dwXoD6OV02GTpRviBzUy?mode=gi_t" target="_blank" rel="noopener">JOIN OUR WHATSAPP GROUP</a>
-<p class="small">Product prices and availability will be displayed here once the shop catalogue is connected.</p>
+<div class="toolbar">
+<input id="search" type="search" placeholder="Search clothes...">
+<select id="categoryFilter">
+<option value="">All categories</option>
+<option>T-Shirts &amp; Polos</option>
+<option>Jeans &amp; Trousers</option>
+<option>Shirts &amp; Shorts</option>
+<option>Jackets &amp; Hoodies</option>
+<option>Other</option>
+</select>
 </div>
+<div id="status" role="status">Loading the latest collection...</div>
+<div class="products" id="products"></div>
 </section>
 
 <section id="contact">
-<h2 class="section-title">SHOP WITH CONFIDENCE</h2>
-<div class="notice">
-<p>Looking for a fresh look? Keep an eye on K-COLLECTIONS for new arrivals and updates.</p>
-<a class="btn" href="https://chat.whatsapp.com/B8dwXoD6OV02GTpRviBzUy?mode=gi_t" target="_blank" rel="noopener">CONNECT WITH US</a>
+<div class="notice" style="text-align:center">
+<h2>Find Your Next Look</h2>
+<p>Join our WhatsApp community for new arrivals and updates.</p>
+<a class="btn" href="https://chat.whatsapp.com/B8dwXoD6OV02GTpRviBzUy?mode=gi_t" target="_blank" rel="noopener">JOIN OUR WHATSAPP GROUP</a>
+</div>
+</section>
+
+<section id="admin">
+<h2 class="section-title">SHOP OWNER</h2>
+<div class="panel" id="loginPanel">
+<h3>Owner Login</h3>
+<p class="muted">Sign in with Jimmy's Supabase account to manage the shop.</p>
+<form id="loginForm">
+<div class="field">
+<label for="email">Email address</label>
+<input id="email" type="email" autocomplete="username" required>
+</div>
+<div class="field" style="margin-top:12px">
+<label for="password">Website password</label>
+<input id="password" type="password" autocomplete="current-password" required>
+</div>
+<div class="actions"><button type="submit">SIGN IN</button></div>
+</form>
+<p id="loginMessage" class="muted" aria-live="polite"></p>
+</div>
+
+<div id="dashboard" class="hidden">
+<div class="panel">
+<h3>Product Dashboard</h3>
+<p id="ownerMessage" class="muted"></p>
+<div class="actions">
+<button id="newProduct" type="button" class="gold">+ ADD PRODUCT</button>
+<button id="refreshProducts" type="button" class="secondary">REFRESH</button>
+<button id="logout" type="button" class="secondary">SIGN OUT</button>
+</div>
+</div>
+
+<div class="panel" id="productFormPanel">
+<h3 id="formTitle">Add a product</h3>
+<form id="productForm">
+<input type="hidden" id="productId">
+<div class="form-grid">
+<div class="field">
+<label for="productName">Product name *</label>
+<input id="productName" maxlength="120" required>
+</div>
+<div class="field">
+<label for="productPrice">Price (₦) *</label>
+<input id="productPrice" type="number" min="0" step="0.01" required>
+</div>
+<div class="field">
+<label for="productCategory">Category *</label>
+<select id="productCategory" required>
+<option>T-Shirts &amp; Polos</option>
+<option>Jeans &amp; Trousers</option>
+<option>Shirts &amp; Shorts</option>
+<option>Jackets &amp; Hoodies</option>
+<option>Other</option>
+</select>
+</div>
+<div class="field">
+<label for="productSizes">Sizes (separate with commas)</label>
+<input id="productSizes" placeholder="S, M, L, XL">
+</div>
+<div class="field">
+<label for="productStock">Quantity in stock *</label>
+<input id="productStock" type="number" min="0" step="1" value="1" required>
+</div>
+<div class="field">
+<label for="productImage">Product photo</label>
+<input id="productImage" type="file" accept="image/jpeg,image/png,image/webp">
+</div>
+<div class="field" style="grid-column:1/-1">
+<label for="productDescription">Description</label>
+<textarea id="productDescription" rows="3" maxlength="1000" placeholder="Describe the fabric, fit, colour, etc."></textarea>
+</div>
+</div>
+<p class="muted">Use a JPG, PNG, or WebP image up to 5 MB. Product photos are visible to the public.</p>
+<div class="actions">
+<button id="saveProduct" type="submit">SAVE PRODUCT</button>
+<button id="cancelEdit" type="button" class="secondary">CANCEL</button>
+</div>
+<p id="formMessage" class="muted" aria-live="polite"></p>
+</form>
+</div>
+
+<div class="panel">
+<h3>Manage Products</h3>
+<div id="adminProducts"><p class="muted">Sign in to load products.</p></div>
+</div>
 </div>
 </section>
 
 <footer>
 <h3>K-COLLECTIONS</h3>
 <p>Classy. Trendy. Affordable.</p>
-<p><a href="https://chat.whatsapp.com/B8dwXoD6OV02GTpRviBzUy?mode=gi_t">Join our WhatsApp community</a></p>
+<p><a href="https://chat.whatsapp.com/B8dwXoD6OV02GTpRviBzUy?mode=gi_t" target="_blank" rel="noopener">Join our WhatsApp community</a></p>
 <p class="small">© 2026 K-COLLECTIONS</p>
 </footer>
+
+<script>
+(function(){
+"use strict";
+
+/* Public project settings. Never put a Supabase secret key here. */
+const SUPABASE_URL = "https://bwkonxdhmhvxlroqtitj.supabase.co";
+const SUPABASE_KEY = "sb_publishable_ApjCd9smYdAqldg3GQ4f5g_HDJ9Pn1q";
+const OWNER_ID = "944ec5c5-cceb-4ef3-9b13-ccfd0bc688e4";
+const WHATSAPP_GROUP = "https://chat.whatsapp.com/B8dwXoD6OV02GTpRviBzUy?mode=gi_t";
+const BUCKET = "product-images";
+
+const $ = id => document.getElementById(id);
+const statusBox = $("status");
+let db = null;
+let currentUser = null;
+let productsCache = [];
+let busy = false;
+
+function escapeHTML(value){
+  return String(value == null ? "" : value).replace(/[&<>"']/g, function(ch){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch];
+  });
+}
+
+function setStatus(message, type){
+  statusBox.textContent = message;
+  statusBox.className = type || "";
+}
+
+function setMessage(id, message){
+  $(id).textContent = message;
+}
+
+function naira(value){
+  return "₦" + Number(value || 0).toLocaleString("en-NG", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2
+  });
+}
+
+function init(){
+  if(!window.supabase){
+    setStatus("The shop library could not load. Check your internet connection and refresh.", "error");
+    return;
+  }
+  db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  loadProducts();
+  db.auth.getSession().then(function(result){
+    if(result.error) return;
+    const user = result.data.session && result.data.session.user;
+    if(user && user.id === OWNER_ID) showDashboard(user);
+    else if(user) awaitSignOut();
+  });
+  db.auth.onAuthStateChange(function(event, session){
+    const user = session && session.user;
+    if(user && user.id === OWNER_ID){
+      showDashboard(user);
+    } else {
+      currentUser = null;
+      $("loginPanel").classList.remove("hidden");
+      $("dashboard").classList.add("hidden");
+      if(user) awaitSignOut();
+    }
+  });
+}
+
+async function awaitSignOut(){
+  if(db) await db.auth.signOut();
+}
+
+function filteredProducts(){
+  const query = $("search").value.trim().toLowerCase();
+  const category = $("categoryFilter").value;
+  return productsCache.filter(function(p){
+    return p.is_active === true &&
+      (!category || p.category === category) &&
+      (!query || (p.name + " " + p.description + " " + p.category).toLowerCase().includes(query));
+  });
+}
+
+function renderProducts(){
+  const list = filteredProducts();
+  const root = $("products");
+  root.innerHTML = "";
+  if(!list.length){
+    root.innerHTML = '<div class="empty">No products found yet. Please check back soon.</div>';
+    return;
+  }
+  list.forEach(function(p){
+    const card = document.createElement("article");
+    card.className = "product";
+    const img = p.image_url || "";
+    const sizes = Array.isArray(p.sizes) ? p.sizes.join(", ") : "";
+    const stock = Number(p.stock) > 0 ? "In stock: " + Number(p.stock) : "Currently sold out";
+    card.innerHTML =
+      '<img loading="lazy" src="' + escapeHTML(img) + '" alt="' + escapeHTML(p.name) + '">' +
+      '<div class="product-info">' +
+      '<div class="muted">' + escapeHTML(p.category) + '</div>' +
+      '<h3>' + escapeHTML(p.name) + '</h3>' +
+      '<div class="price">' + naira(p.price) + '</div>' +
+      '<div class="muted">' + escapeHTML(p.description || "") + '</div>' +
+      '<div class="muted">Sizes: ' + escapeHTML(sizes || "Ask us") + '</div>' +
+      '<div class="muted">' + escapeHTML(stock) + '</div>' +
+      '<button type="button" ' + (Number(p.stock) <= 0 ? "disabled" : "") + '>ORDER ON WHATSAPP</button>' +
+      '</div>';
+    const imgElement = card.querySelector("img");
+    imgElement.addEventListener("error", function(){
+      imgElement.style.display = "none";
+    }, {once:true});
+    card.querySelector("button").addEventListener("click", function(){
+      const message = "Hello K-COLLECTIONS! I want to order:\n" +
+        p.name + "\nPrice: " + naira(p.price) + "\nSizes: " + (sizes || "Please advise") +
+        "\nPlease confirm availability.";
+      const url = "https://wa.me/?text=" + encodeURIComponent(message);
+      window.open(url, "_blank", "noopener");
+    });
+    root.appendChild(card);
+  });
+}
+
+async function loadProducts(){
+  if(!db) return;
+  setStatus("Loading the latest collection...");
+  const result = await db.from("products")
+    .select("id,name,description,category,price,sizes,image_url,stock,is_active,created_at")
+    .eq("is_active", true)
+    .order("created_at", {ascending:false});
+  if(result.error){
+    setStatus("Could not load products. Database access may need to be enabled in Supabase. " + result.error.message, "error");
+    $("products").innerHTML = "";
+    return;
+  }
+  productsCache = result.data || [];
+  setStatus(productsCache.length ? productsCache.length + " product(s) available." : "Our collection is being prepared. Check back soon.");
+  renderProducts();
+  if(currentUser) renderAdminProducts();
+}
+
+function showDashboard(user){
+  if(!user || user.id !== OWNER_ID) return;
+  currentUser = user;
+  $("loginPanel").classList.add("hidden");
+  $("dashboard").classList.remove("hidden");
+  $("ownerMessage").textContent = "Signed in as " + user.email;
+  renderAdminProducts();
+}
+
+async function signIn(event){
+  event.preventDefault();
+  if(busy) return;
+  busy = true;
+  const button = $("loginForm").querySelector("button");
+  button.disabled = true;
+  setMessage("loginMessage", "Signing in...");
+  try{
+    const result = await db.auth.signInWithPassword({
+      email: $("email").value.trim(),
+      password: $("password").value
+    });
+    if(result.error) throw result.error;
+    const user = result.data.user;
+    if(!user || user.id !== OWNER_ID){
+      await db.auth.signOut();
+      throw new Error("This account is not authorised as the shop owner.");
+    }
+    $("password").value = "";
+    showDashboard(user);
+    await loadProducts();
+    setMessage("loginMessage", "");
+  }catch(error){
+    setMessage("loginMessage", error.message || "Login failed. Check your details.");
+  }finally{
+    busy = false;
+    button.disabled = false;
+  }
+}
+
+function resetForm(){
+  $("productForm").reset();
+  $("productId").value = "";
+  $("productStock").value = "1";
+  $("formTitle").textContent = "Add a product";
+  $("saveProduct").textContent = "SAVE PRODUCT";
+  $("productImage").required = false;
+  setMessage("formMessage", "");
+}
+
+function editProduct(p){
+  $("productId").value = p.id;
+  $("productName").value = p.name || "";
+  $("productPrice").value = p.price;
+  $("productCategory").value = p.category || "Other";
+  $("productSizes").value = Array.isArray(p.sizes) ? p.sizes.join(", ") : "";
+  $("productStock").value = p.stock;
+  $("productDescription").value = p.description || "";
+  $("productImage").value = "";
+  $("formTitle").textContent = "Edit product";
+  $("saveProduct").textContent = "UPDATE PRODUCT";
+  $("productFormPanel").scrollIntoView({behavior:"smooth"});
+}
+
+function renderAdminProducts(){
+  const root = $("adminProducts");
+  root.innerHTML = "";
+  if(!productsCache.length){
+    root.innerHTML = '<p class="muted">No products yet. Add your first product above.</p>';
+    return;
+  }
+  productsCache.forEach(function(p){
+    const item = document.createElement("div");
+    item.className = "admin-item";
+    item.innerHTML =
+      '<img src="' + escapeHTML(p.image_url || "") + '" alt="">' +
+      '<div class="info"><strong>' + escapeHTML(p.name) + '</strong>' +
+      '<span class="muted">' + naira(p.price) + ' · Stock: ' + Number(p.stock) + '</span></div>' +
+      '<button type="button" class="secondary edit">EDIT</button>' +
+      '<button type="button" class="danger remove">DELETE</button>';
+    item.querySelector(".edit").addEventListener("click", function(){editProduct(p);});
+    item.querySelector(".remove").addEventListener("click", function(){deleteProduct(p);});
+    root.appendChild(item);
+  });
+}
+
+async function uploadImage(file){
+  if(!file) return "";
+  if(file.size > 5 * 1024 * 1024) throw new Error("Choose an image smaller than 5 MB.");
+  const allowed = ["image/jpeg","image/png","image/webp"];
+  if(!allowed.includes(file.type)) throw new Error("Use a JPG, PNG, or WebP image.");
+  const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+  const path = currentUser.id + "/" + Date.now() + "-" + Math.random().toString(36).slice(2) + "." + ext;
+  const result = await db.storage.from(BUCKET).upload(path, file, {
+    contentType:file.type,
+    cacheControl:"3600",
+    upsert:false
+  });
+  if(result.error) throw result.error;
+  return db.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+}
+
+async function saveProduct(event){
+  event.preventDefault();
+  if(!currentUser || currentUser.id !== OWNER_ID) {
+    setMessage("formMessage", "Please sign in as the authorised owner.");
+    return;
+  }
+  if(busy) return;
+  busy = true;
+  const button = $("saveProduct");
+  button.disabled = true;
+  setMessage("formMessage", "Saving product...");
+  try{
+    const id = $("productId").value;
+    const file = $("productImage").files[0];
+    let imageUrl = "";
+    if(file) imageUrl = await uploadImage(file);
+    else if(id){
+      const existing = productsCache.find(function(p){return String(p.id) === String(id);});
+      imageUrl = existing ? existing.image_url || "" : "";
+    }
+    const sizes = $("productSizes").value.split(",").map(function(s){return s.trim();}).filter(Boolean);
+    const data = {
+      name:$("productName").value.trim(),
+      price:Number($("productPrice").value),
+      category:$("productCategory").value,
+      sizes:sizes,
+      stock:Number($("productStock").value),
+      description:$("productDescription").value.trim(),
+      image_url:imageUrl,
+      is_active:true,
+      updated_at:new Date().toISOString()
+    };
+    if(!data.name) throw new Error("Enter a product name.");
+    if(!Number.isFinite(data.price) || data.price < 0) throw new Error("Enter a valid price.");
+    if(!Number.isInteger(data.stock) || data.stock < 0) throw new Error("Enter a valid stock quantity.");
+    if(!id && !imageUrl) throw new Error("Please upload a product photo.");
+    let result;
+    if(id){
+      result = await db.from("products").update(data).eq("id", Number(id)).select().single();
+    }else{
+      result = await db.from("products").insert(data).select().single();
+    }
+    if(result.error) throw result.error;
+    resetForm();
+    setMessage("formMessage", "Product saved successfully.");
+    await loadProducts();
+  }catch(error){
+    setMessage("formMessage", "Could not save: " + (error.message || "Unknown error"));
+  }finally{
+    busy = false;
+    button.disabled = false;
+  }
+}
+
+async function deleteProduct(p){
+  if(!currentUser || currentUser.id !== OWNER_ID) return;
+  if(!confirm("Delete " + p.name + "? This removes it from the catalogue.")) return;
+  const result = await db.from("products").delete().eq("id", p.id);
+  if(result.error){
+    alert("Could not delete product: " + result.error.message);
+    return;
+  }
+  await loadProducts();
+}
+
+async function logout(){
+  await db.auth.signOut();
+  currentUser = null;
+  $("dashboard").classList.add("hidden");
+  $("loginPanel").classList.remove("hidden");
+  $("loginForm").reset();
+  resetForm();
+}
+
+$("loginForm").addEventListener("submit", signIn);
+$("productForm").addEventListener("submit", saveProduct);
+$("search").addEventListener("input", renderProducts);
+$("categoryFilter").addEventListener("change", renderProducts);
+$("newProduct").addEventListener("click", function(){
+  resetForm();
+  $("productFormPanel").scrollIntoView({behavior:"smooth"});
+});
+$("cancelEdit").addEventListener("click", resetForm);
+$("refreshProducts").addEventListener("click", loadProducts);
+$("logout").addEventListener("click", logout);
+
+init();
+})();
+</script>
 </body>
 </html>
