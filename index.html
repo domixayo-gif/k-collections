@@ -127,9 +127,9 @@ footer a{color:var(--gold)}
 <section id="contact">
 <div class="notice" style="text-align:center">
 <h2>Need Help or Want to Order?</h2>
-<p>Message Jimmy directly on WhatsApp for orders, sizes, prices, and enquiries.</p>
+<p>Contact K-COLLECTIONS directly on WhatsApp for orders, sizes, prices, and enquiries.</p>
 <div class="contact-buttons">
-<a class="btn whatsapp" href="https://wa.me/2348121750582?text=Hello%20Jimmy%2C%20I%20am%20contacting%20you%20from%20the%20K-COLLECTIONS%20website." target="_blank" rel="noopener">CHAT WITH JIMMY</a>
+<a class="btn whatsapp" href="https://wa.me/2348121750582?text=Hello%20K-COLLECTIONS%2C%20I%20am%20contacting%20you%20from%20your%20website." target="_blank" rel="noopener">CHAT WITH K-COLLECTIONS</a>
 <a class="btn" href="https://chat.whatsapp.com/B8dwXoD6OV02GTpRviBzUy?mode=gi_t" target="_blank" rel="noopener">JOIN OUR WHATSAPP GROUP</a>
 </div>
 </div>
@@ -139,7 +139,7 @@ footer a{color:var(--gold)}
 <h2 class="section-title">SHOP OWNER</h2>
 <div class="panel" id="loginPanel">
 <h3>Owner Login</h3>
-<p class="muted">Sign in with Jimmy's Supabase account to manage the shop.</p>
+<p class="muted">Kevin can sign in with his authorised Supabase account to manage the shop.</p>
 <form id="loginForm">
 <div class="field">
 <label for="email">Email address</label>
@@ -224,8 +224,8 @@ footer a{color:var(--gold)}
 <footer>
 <h3>K-COLLECTIONS</h3>
 <p>Classy. Trendy. Affordable.</p>
-<p><a href="https://wa.me/2348121750582?text=Hello%20Jimmy%2C%20I%20am%20contacting%20you%20from%20the%20K-COLLECTIONS%20website." target="_blank" rel="noopener">Message Jimmy directly on WhatsApp</a></p>
-<p><a href="https://chat.whatsapp.com/B8dwXoD6OV02GTpRviBzUy?mode=gi_t" target="_blank" rel="noopener">Join our WhatsApp community</a></p>
+<p><a href="https://wa.me/2348121750582?text=Hello%20K-COLLECTIONS%2C%20I%20am%20contacting%20you%20from%20your%20website." target="_blank" rel="noopener">CHAT WITH K-COLLECTIONS ON WHATSAPP</a></p>
+<p><a href="https://chat.whatsapp.com/B8dwXoD6OV02GTpRviBzUy?mode=gi_t" target="_blank" rel="noopener">JOIN OUR WHATSAPP COMMUNITY</a></p>
 <p class="small">© 2026 K-COLLECTIONS</p>
 </footer>
 
@@ -273,25 +273,35 @@ function init(){
     setStatus("The shop library could not load. Check your internet connection and refresh.", "error");
     return;
   }
+
   db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   loadProducts();
 
   db.auth.getSession().then(function(result){
     if(result.error) return;
+
     const user = result.data.session && result.data.session.user;
-    if(user && user.id === OWNER_ID) showDashboard(user);
-    else if(user) awaitSignOut();
+
+    if(user && user.id === OWNER_ID){
+      showDashboard(user);
+    }else if(user){
+      awaitSignOut();
+    }
   });
 
   db.auth.onAuthStateChange(function(event, session){
     const user = session && session.user;
+
     if(user && user.id === OWNER_ID){
       showDashboard(user);
     }else{
       currentUser = null;
       $("loginPanel").classList.remove("hidden");
       $("dashboard").classList.add("hidden");
-      if(user) awaitSignOut();
+
+      if(user){
+        awaitSignOut();
+      }
     }
   });
 }
@@ -303,6 +313,7 @@ async function awaitSignOut(){
 function filteredProducts(){
   const query = $("search").value.trim().toLowerCase();
   const category = $("categoryFilter").value;
+
   return productsCache.filter(function(p){
     return p.is_active === true &&
       (!category || p.category === category) &&
@@ -323,6 +334,7 @@ function renderProducts(){
   list.forEach(function(p){
     const card = document.createElement("article");
     card.className = "product";
+
     const sizes = Array.isArray(p.sizes) ? p.sizes.join(", ") : "";
     const stock = Number(p.stock) > 0 ? "In stock: " + Number(p.stock) : "Currently sold out";
 
@@ -339,16 +351,19 @@ function renderProducts(){
       '</div>';
 
     const imgElement = card.querySelector("img");
+
     imgElement.addEventListener("error", function(){
       imgElement.style.display = "none";
     }, {once:true});
 
     card.querySelector(".whatsapp-order").addEventListener("click", function(){
-      const message = "Hello Jimmy! I found this item on the K-COLLECTIONS website and would like to order:\n\n" +
+      const message =
+        "Hello K-COLLECTIONS! I found this item on your website and would like to order:\n\n" +
         "Product: " + p.name +
         "\nPrice: " + naira(p.price) +
         "\nAvailable sizes: " + (sizes || "Please advise") +
         "\nPlease confirm availability. Thank you.";
+
       const url = "https://wa.me/" + WHATSAPP_NUMBER + "?text=" + encodeURIComponent(message);
       window.open(url, "_blank");
     });
@@ -359,6 +374,7 @@ function renderProducts(){
 
 async function loadProducts(){
   if(!db) return;
+
   setStatus("Loading the latest collection...");
 
   const result = await db.from("products")
@@ -373,26 +389,39 @@ async function loadProducts(){
   }
 
   productsCache = result.data || [];
-  setStatus(productsCache.length ? productsCache.length + " product(s) available." : "Our collection is being prepared. Check back soon.");
+
+  setStatus(
+    productsCache.length
+      ? productsCache.length + " product(s) available."
+      : "Our collection is being prepared. Check back soon."
+  );
+
   renderProducts();
+
   if(currentUser) renderAdminProducts();
 }
 
 function showDashboard(user){
   if(!user || user.id !== OWNER_ID) return;
+
   currentUser = user;
   $("loginPanel").classList.add("hidden");
   $("dashboard").classList.remove("hidden");
   $("ownerMessage").textContent = "Signed in as " + user.email;
+
   renderAdminProducts();
 }
 
 async function signIn(event){
   event.preventDefault();
+
   if(busy) return;
+
   busy = true;
+
   const button = $("loginForm").querySelector("button");
   button.disabled = true;
+
   setMessage("loginMessage", "Signing in...");
 
   try{
@@ -400,9 +429,11 @@ async function signIn(event){
       email: $("email").value.trim(),
       password: $("password").value
     });
+
     if(result.error) throw result.error;
 
     const user = result.data.user;
+
     if(!user || user.id !== OWNER_ID){
       await db.auth.signOut();
       throw new Error("This account is not authorised as the shop owner.");
@@ -411,6 +442,7 @@ async function signIn(event){
     $("password").value = "";
     showDashboard(user);
     await loadProducts();
+
     setMessage("loginMessage", "");
   }catch(error){
     setMessage("loginMessage", error.message || "Login failed. Check your details.");
@@ -427,6 +459,7 @@ function resetForm(){
   $("formTitle").textContent = "Add a product";
   $("saveProduct").textContent = "SAVE PRODUCT";
   $("productImage").required = false;
+
   setMessage("formMessage", "");
 }
 
@@ -441,6 +474,7 @@ function editProduct(p){
   $("productImage").value = "";
   $("formTitle").textContent = "Edit product";
   $("saveProduct").textContent = "UPDATE PRODUCT";
+
   $("productFormPanel").scrollIntoView({behavior:"smooth"});
 }
 
@@ -456,6 +490,7 @@ function renderAdminProducts(){
   productsCache.forEach(function(p){
     const item = document.createElement("div");
     item.className = "admin-item";
+
     item.innerHTML =
       '<img src="' + escapeHTML(p.image_url || "") + '" alt="">' +
       '<div class="info"><strong>' + escapeHTML(p.name) + '</strong>' +
@@ -463,21 +498,36 @@ function renderAdminProducts(){
       '<button type="button" class="secondary edit">EDIT</button>' +
       '<button type="button" class="danger remove">DELETE</button>';
 
-    item.querySelector(".edit").addEventListener("click", function(){editProduct(p);});
-    item.querySelector(".remove").addEventListener("click", function(){deleteProduct(p);});
+    item.querySelector(".edit").addEventListener("click", function(){
+      editProduct(p);
+    });
+
+    item.querySelector(".remove").addEventListener("click", function(){
+      deleteProduct(p);
+    });
+
     root.appendChild(item);
   });
 }
 
 async function uploadImage(file){
   if(!file) return "";
-  if(file.size > 5 * 1024 * 1024) throw new Error("Choose an image smaller than 5 MB.");
+
+  if(file.size > 5 * 1024 * 1024){
+    throw new Error("Choose an image smaller than 5 MB.");
+  }
 
   const allowed = ["image/jpeg","image/png","image/webp"];
-  if(!allowed.includes(file.type)) throw new Error("Use a JPG, PNG, or WebP image.");
 
-  const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
-  const path = currentUser.id + "/" + Date.now() + "-" + Math.random().toString(36).slice(2) + "." + ext;
+  if(!allowed.includes(file.type)){
+    throw new Error("Use a JPG, PNG, or WebP image.");
+  }
+
+  const ext = file.type === "image/png" ? "png" :
+    file.type === "image/webp" ? "webp" : "jpg";
+
+  const path = currentUser.id + "/" + Date.now() + "-" +
+    Math.random().toString(36).slice(2) + "." + ext;
 
   const result = await db.storage.from(BUCKET).upload(path, file, {
     contentType:file.type,
@@ -486,6 +536,7 @@ async function uploadImage(file){
   });
 
   if(result.error) throw result.error;
+
   return db.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
 }
 
@@ -496,11 +547,14 @@ async function saveProduct(event){
     setMessage("formMessage", "Please sign in as the authorised owner.");
     return;
   }
+
   if(busy) return;
 
   busy = true;
+
   const button = $("saveProduct");
   button.disabled = true;
+
   setMessage("formMessage", "Saving product...");
 
   try{
@@ -508,9 +562,13 @@ async function saveProduct(event){
     const file = $("productImage").files[0];
     let imageUrl = "";
 
-    if(file) imageUrl = await uploadImage(file);
-    else if(id){
-      const existing = productsCache.find(function(p){return String(p.id) === String(id);});
+    if(file){
+      imageUrl = await uploadImage(file);
+    }else if(id){
+      const existing = productsCache.find(function(p){
+        return String(p.id) === String(id);
+      });
+
       imageUrl = existing ? existing.image_url || "" : "";
     }
 
@@ -536,16 +594,25 @@ async function saveProduct(event){
     if(!id && !imageUrl) throw new Error("Please upload a product photo.");
 
     let result;
+
     if(id){
-      result = await db.from("products").update(data).eq("id", Number(id)).select().single();
+      result = await db.from("products")
+        .update(data)
+        .eq("id", Number(id))
+        .select()
+        .single();
     }else{
-      result = await db.from("products").insert(data).select().single();
+      result = await db.from("products")
+        .insert(data)
+        .select()
+        .single();
     }
 
     if(result.error) throw result.error;
 
     resetForm();
     setMessage("formMessage", "Product saved successfully.");
+
     await loadProducts();
   }catch(error){
     setMessage("formMessage", "Could not save: " + (error.message || "Unknown error"));
@@ -557,22 +624,30 @@ async function saveProduct(event){
 
 async function deleteProduct(p){
   if(!currentUser || currentUser.id !== OWNER_ID) return;
-  if(!confirm("Delete " + p.name + "? This removes it from the catalogue.")) return;
+
+  if(!confirm("Delete " + p.name + "? This removes it from the catalogue.")){
+    return;
+  }
 
   const result = await db.from("products").delete().eq("id", p.id);
+
   if(result.error){
     alert("Could not delete product: " + result.error.message);
     return;
   }
+
   await loadProducts();
 }
 
 async function logout(){
   await db.auth.signOut();
+
   currentUser = null;
+
   $("dashboard").classList.add("hidden");
   $("loginPanel").classList.remove("hidden");
   $("loginForm").reset();
+
   resetForm();
 }
 
